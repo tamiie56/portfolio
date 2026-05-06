@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tamim Chad Likhon — Flutter Developer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #111118;
+      --card: #16161f;
+      --border: rgba(255,255,255,0.07);
+      --accent: #00e5ff;
+      --accent2: #7c3aed;
+      --accent3: #f97316;
+      --text: #e8e8f0;
+      --muted: #6b6b80;
+      --glow: rgba(0, 229, 255, 0.15);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    /* Custom Cursor */
+    .cursor {
+      width: 12px; height: 12px;
+      background: var(--accent);
+      border-radius: 50%;
+      position: fixed;
+      pointer-events: none;
+      z-index: 9999;
+      transition: transform 0.1s ease;
+      mix-blend-mode: screen;
+    }
+    .cursor-ring {
+      width: 36px; height: 36px;
+      border: 1px solid var(--accent);
+      border-radius: 50%;
+      position: fixed;
+      pointer-events: none;
+      z-index: 9998;
+      transition: all 0.15s ease;
+      opacity: 0.5;
+    }
+
+    /* Noise overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9000;
+      opacity: 0.4;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0;
+      z-index: 100;
+      padding: 1.5rem 4rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      backdrop-filter: blur(20px);
+      background: rgba(10,10,15,0.8);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1.1rem;
+      letter-spacing: 0.05em;
+      color: var(--accent);
+    }
+    .nav-links { display: flex; gap: 2.5rem; list-style: none; }
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.75rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+
+    /* HERO */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 0 4rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-grid-bg {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(0,229,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,255,0.04) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black 40%, transparent 100%);
+    }
+
+    .hero-glow {
+      position: absolute;
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(0,229,255,0.08) 0%, transparent 70%);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    .hero-content { position: relative; z-index: 2; max-width: 900px; }
+
+    .hero-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      border: 1px solid rgba(0,229,255,0.3);
+      padding: 0.35rem 0.9rem;
+      border-radius: 2px;
+      margin-bottom: 2rem;
+      animation: fadeUp 0.6s ease both;
+    }
+    .hero-tag::before {
+      content: '';
+      width: 6px; height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.8); }
+    }
+
+    .hero-name {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: clamp(3rem, 8vw, 7rem);
+      line-height: 0.95;
+      letter-spacing: -0.03em;
+      margin-bottom: 1.5rem;
+      animation: fadeUp 0.6s 0.1s ease both;
+    }
+    .hero-name span { color: var(--accent); }
+
+    .hero-role {
+      font-size: 1rem;
+      color: var(--muted);
+      margin-bottom: 1.5rem;
+      letter-spacing: 0.05em;
+      animation: fadeUp 0.6s 0.2s ease both;
+    }
+
+    .hero-bio {
+      max-width: 520px;
+      font-size: 0.85rem;
+      line-height: 1.9;
+      color: rgba(232,232,240,0.65);
+      margin-bottom: 2.5rem;
+      animation: fadeUp 0.6s 0.3s ease both;
+    }
+
+    .hero-quote {
+      display: inline-block;
+      font-size: 0.75rem;
+      color: var(--accent3);
+      border-left: 2px solid var(--accent3);
+      padding-left: 0.75rem;
+      margin-bottom: 2.5rem;
+      animation: fadeUp 0.6s 0.35s ease both;
+    }
+
+    .hero-cta {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      animation: fadeUp 0.6s 0.4s ease both;
+    }
+
+    .btn {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.8rem 1.8rem;
+      border-radius: 2px;
+      text-decoration: none;
+      cursor: none;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #000;
+      font-weight: 500;
+      border: 1px solid var(--accent);
+    }
+    .btn-primary:hover {
+      background: transparent;
+      color: var(--accent);
+      box-shadow: 0 0 20px var(--glow);
+    }
+    .btn-ghost {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .hero-scroll {
+      position: absolute;
+      bottom: 2.5rem; left: 4rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      animation: fadeUp 0.6s 0.6s ease both;
+    }
+    .scroll-line {
+      width: 40px; height: 1px;
+      background: var(--muted);
+      position: relative;
+      overflow: hidden;
+    }
+    .scroll-line::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: var(--accent);
+      animation: scanline 2s infinite;
+    }
+    @keyframes scanline {
+      to { left: 100%; }
+    }
+
+    /* SECTIONS */
+    section { padding: 6rem 4rem; position: relative; }
+    .section-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.75rem;
+    }
+    .section-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: clamp(2rem, 4vw, 3.5rem);
+      line-height: 1;
+      letter-spacing: -0.02em;
+      margin-bottom: 3rem;
+    }
+
+    /* ABOUT */
+    #about { background: var(--surface); }
+    .about-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5rem;
+      align-items: start;
+    }
+    .about-text p {
+      font-size: 0.85rem;
+      line-height: 2;
+      color: rgba(232,232,240,0.7);
+      margin-bottom: 1.5rem;
+    }
+    .about-interests {
+      display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.5rem;
+    }
+    .interest-tag {
+      font-size: 0.7rem;
+      padding: 0.4rem 0.9rem;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+    }
+    .about-stats { display: flex; flex-direction: column; gap: 2rem; }
+    .stat-item { border-left: 2px solid var(--accent); padding-left: 1.5rem; }
+    .stat-num {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 2.5rem;
+      color: var(--accent);
+      line-height: 1;
+    }
+    .stat-label { font-size: 0.75rem; color: var(--muted); margin-top: 0.25rem; }
+
+    /* SKILLS */
+    #skills { background: var(--bg); }
+    .skills-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1px;
+      border: 1px solid var(--border);
+    }
+    .skill-card {
+      background: var(--card);
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+      transition: background 0.3s;
+    }
+    .skill-card:hover { background: #1e1e2a; }
+    .skill-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--accent);
+      transform: scaleX(0);
+      transition: transform 0.3s;
+    }
+    .skill-card:hover::after { transform: scaleX(1); }
+    .skill-icon { font-size: 2rem; margin-bottom: 1rem; }
+    .skill-name {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+    }
+    .skill-desc { font-size: 0.7rem; color: var(--muted); line-height: 1.7; }
+    .skill-badge {
+      display: inline-block;
+      font-size: 0.6rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 2px;
+      margin-top: 0.75rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .badge-main { background: rgba(0,229,255,0.1); color: var(--accent); }
+    .badge-learning { background: rgba(249,115,22,0.1); color: var(--accent3); }
+
+    /* PROJECTS */
+    #projects { background: var(--surface); }
+    .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 1.5rem;
+    }
+    .project-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.3s, border-color 0.3s;
+    }
+    .project-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(0,229,255,0.3);
+    }
+    .project-num {
+      font-family: 'Syne', sans-serif;
+      font-size: 4rem;
+      font-weight: 800;
+      color: rgba(0,229,255,0.06);
+      position: absolute;
+      top: 1rem; right: 1.5rem;
+      line-height: 1;
+      pointer-events: none;
+    }
+    .project-tag {
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 1rem;
+    }
+    .project-name {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 1.5rem;
+      margin-bottom: 0.75rem;
+      letter-spacing: -0.01em;
+    }
+    .project-desc {
+      font-size: 0.78rem;
+      color: rgba(232,232,240,0.6);
+      line-height: 1.8;
+      margin-bottom: 1.5rem;
+    }
+    .project-tech {
+      display: flex; flex-wrap: wrap; gap: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .tech-chip {
+      font-size: 0.65rem;
+      padding: 0.3rem 0.7rem;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      letter-spacing: 0.08em;
+    }
+    .project-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      text-decoration: none;
+      transition: gap 0.2s;
+    }
+    .project-link:hover { gap: 0.75rem; }
+
+    .project-coming {
+      opacity: 0.5;
+      border-style: dashed;
+    }
+    .project-coming .project-tag { color: var(--muted); }
+
+    /* EDUCATION */
+    #education { background: var(--bg); }
+    .timeline { position: relative; }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 1px;
+      background: linear-gradient(to bottom, var(--accent), transparent);
+    }
+    .timeline-item {
+      padding: 0 0 3rem 3rem;
+      position: relative;
+      opacity: 0;
+      transform: translateX(-20px);
+      transition: all 0.5s ease;
+    }
+    .timeline-item.visible {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    .timeline-dot {
+      position: absolute;
+      left: -5px; top: 4px;
+      width: 11px; height: 11px;
+      background: var(--accent);
+      border-radius: 50%;
+      box-shadow: 0 0 12px var(--accent);
+    }
+    .timeline-date {
+      font-size: 0.68rem;
+      color: var(--accent);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+    .timeline-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 1.1rem;
+      margin-bottom: 0.25rem;
+    }
+    .timeline-sub {
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    /* CONTACT */
+    #contact { background: var(--surface); }
+    .contact-wrapper {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5rem;
+    }
+    .contact-intro p {
+      font-size: 0.85rem;
+      line-height: 2;
+      color: rgba(232,232,240,0.65);
+      margin-bottom: 2rem;
+    }
+    .contact-email {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 1.2rem;
+      color: var(--accent);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(0,229,255,0.3);
+      padding-bottom: 0.25rem;
+      transition: border-color 0.2s;
+    }
+    .contact-email:hover { border-color: var(--accent); }
+    .social-links { display: flex; flex-direction: column; gap: 1rem; }
+    .social-link {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 1.25rem;
+      border: 1px solid var(--border);
+      text-decoration: none;
+      color: var(--text);
+      font-size: 0.8rem;
+      letter-spacing: 0.05em;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .social-link:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      padding-left: 1.75rem;
+    }
+    .social-icon { font-size: 1.1rem; min-width: 24px; }
+    .social-handle { color: var(--muted); font-size: 0.72rem; margin-left: auto; }
+
+    /* FOOTER */
+    footer {
+      padding: 2rem 4rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+    }
+
+    /* ANIMATIONS */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: all 0.6s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* HERO PHOTO */
+    .hero-photo-wrap {
+      position: absolute;
+      right: 6rem;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 2;
+      animation: fadeUp 0.8s 0.3s ease both;
+    }
+    .hero-photo-frame {
+      position: relative;
+      width: 280px;
+      height: 340px;
+    }
+    .hero-photo-frame::before {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      background: linear-gradient(135deg, var(--accent), transparent 60%, var(--accent2));
+      border-radius: 4px;
+      z-index: -1;
+    }
+    .hero-photo-frame::after {
+      content: '';
+      position: absolute;
+      bottom: -16px;
+      right: -16px;
+      width: 100%;
+      height: 100%;
+      border: 1px solid rgba(0,229,255,0.2);
+      border-radius: 4px;
+      z-index: -2;
+    }
+    .hero-photo-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top;
+      border-radius: 3px;
+      display: block;
+      filter: grayscale(20%) contrast(1.05);
+    }
+    .photo-glow {
+      position: absolute;
+      inset: -40px;
+      background: radial-gradient(circle, rgba(0,229,255,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* MOBILE */
+    @media (max-width: 768px) {
+      nav { padding: 1.25rem 1.5rem; }
+      .nav-links { display: none; }
+      .hero, section { padding-left: 1.5rem; padding-right: 1.5rem; }
+      .hero-scroll { left: 1.5rem; }
+      .hero-photo-wrap { display: none; }
+      .about-grid, .contact-wrapper { grid-template-columns: 1fr; gap: 2.5rem; }
+      footer { flex-direction: column; gap: 0.5rem; text-align: center; }
+      .projects-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-ring" id="cursorRing"></div>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-logo">TCL</div>
+    <ul class="nav-links">
+      <li><a href="#about">About</a></li>
+      <li><a href="#skills">Skills</a></li>
+      <li><a href="#projects">Projects</a></li>
+      <li><a href="#education">Education</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero" id="home">
+    <div class="hero-grid-bg"></div>
+    <div class="hero-glow"></div>
+    <div class="hero-content">
+      <div class="hero-tag">Available for opportunities</div>
+      <h1 class="hero-name">Tamim Chad<br><span>Likhon</span></h1>
+      <p class="hero-role">Flutter · Android · iOS Developer</p>
+      <p class="hero-bio">
+        An ambitious junior developer working day &amp; night to level up, building beautiful cross-platform mobile apps with Flutter. Based in Dhaka, Bangladesh.
+      </p>
+      <div class="hero-quote">"One cold coffee &amp; life is প্যারাহীন"</div>
+      <div class="hero-cta">
+        <a href="#projects" class="btn btn-primary">View Projects</a>
+        <a href="#contact" class="btn btn-ghost">Get in Touch</a>
+      </div>
+    </div>
+    <div class="hero-scroll">
+      <div class="scroll-line"></div>
+      Scroll to explore
+    </div>
+
+    <div class="hero-photo-wrap">
+      <div class="hero-photo-frame">
+        <div class="photo-glow"></div>
+        <img src="profile.jpg" alt="Tamim Chad Likhon" />
+      </div>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section id="about">
+    <div class="section-label">01 — About</div>
+    <h2 class="section-title reveal">Who I Am</h2>
+    <div class="about-grid">
+      <div class="about-text reveal">
+        <p>
+          I'm Tamim — a CSE student from Shanto-Mariam University of Creative Technology with a serious passion for mobile development. I spend my time building Flutter apps and chasing the goal of becoming a full-stack Android &amp; iOS developer.
+        </p>
+        <p>
+          When I'm not coding, you'll find me deep in a video game, watching adventurous or horror comedy films, or planning my next trip to the mountains. I believe in putting in the work — quietly, consistently — until the results speak.
+        </p>
+        <div class="about-interests">
+          <span class="interest-tag">🎮 Video Games</span>
+          <span class="interest-tag">🎬 Horror Comedy</span>
+          <span class="interest-tag">⛰️ Mountain Travel</span>
+          <span class="interest-tag">☕ Cold Coffee</span>
+          <span class="interest-tag">📱 Mobile Dev</span>
+        </div>
+      </div>
+      <div class="about-stats reveal">
+        <div class="stat-item">
+          <div class="stat-num">2026</div>
+          <div class="stat-label">Expected Graduation — B.Sc. CSE</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">3+</div>
+          <div class="stat-label">Years of coding experience</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">1</div>
+          <div class="stat-label">Published project &amp; counting</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">∞</div>
+          <div class="stat-label">Motivation to keep building</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SKILLS -->
+  <section id="skills">
+    <div class="section-label">02 — Skills</div>
+    <h2 class="section-title reveal">Tech Stack</h2>
+    <div class="skills-grid reveal">
+      <div class="skill-card">
+        <div class="skill-icon">🐦</div>
+        <div class="skill-name">Flutter</div>
+        <div class="skill-desc">Cross-platform UI toolkit for building natively compiled apps for mobile.</div>
+        <span class="skill-badge badge-main">Primary</span>
+      </div>
+      <div class="skill-card">
+        <div class="skill-icon">🎯</div>
+        <div class="skill-name">Dart</div>
+        <div class="skill-desc">The language powering Flutter. Clean, typed, and built for speed.</div>
+        <span class="skill-badge badge-main">Primary</span>
+      </div>
+      <div class="skill-card">
+        <div class="skill-icon">🍃</div>
+        <div class="skill-name">MongoDB</div>
+        <div class="skill-desc">NoSQL database for flexible, scalable backend data management.</div>
+        <span class="skill-badge badge-main">Working</span>
+      </div>
+      <div class="skill-card">
+        <div class="skill-icon">📱</div>
+        <div class="skill-name">Kotlin</div>
+        <div class="skill-desc">Learning native Android development to go full-stack on the platform.</div>
+        <span class="skill-badge badge-learning">Learning</span>
+      </div>
+      <div class="skill-card">
+        <div class="skill-icon">🤖</div>
+        <div class="skill-name">Android</div>
+        <div class="skill-desc">Deep focus on Android platform — from app architecture to publishing.</div>
+        <span class="skill-badge badge-main">Focus</span>
+      </div>
+      <div class="skill-card">
+        <div class="skill-icon">🍎</div>
+        <div class="skill-name">iOS (Goal)</div>
+        <div class="skill-desc">Building towards full-stack iOS development as a core skill.</div>
+        <span class="skill-badge badge-learning">Goal</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROJECTS -->
+  <section id="projects">
+    <div class="section-label">03 — Projects</div>
+    <h2 class="section-title reveal">What I've Built</h2>
+    <div class="projects-grid">
+      <div class="project-card reveal">
+        <div class="project-num">01</div>
+        <div class="project-tag">Flutter · Mobile App</div>
+        <div class="project-name">MemoryMiles</div>
+        <div class="project-desc">
+          A personal memory tracking app built with Flutter. Capture your journey, mile by mile — a digital diary for the moments that matter.
+        </div>
+        <div class="project-tech">
+          <span class="tech-chip">Flutter</span>
+          <span class="tech-chip">Dart</span>
+          <span class="tech-chip">Mobile</span>
+        </div>
+        <a href="https://github.com/tamiie56/memory_miles_flutter" target="_blank" class="project-link">
+          View on GitHub →
+        </a>
+      </div>
+      <div class="project-card project-coming reveal">
+        <div class="project-num">02</div>
+        <div class="project-tag">Coming Soon</div>
+        <div class="project-name">Next Project</div>
+        <div class="project-desc">
+          Currently in development. Check back soon — something exciting is being built.
+        </div>
+        <div class="project-tech">
+          <span class="tech-chip">Flutter</span>
+          <span class="tech-chip">TBD</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- EDUCATION -->
+  <section id="education">
+    <div class="section-label">04 — Education</div>
+    <h2 class="section-title reveal">Academic Path</h2>
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-date">2022 – Sep 2026 (Ongoing)</div>
+        <div class="timeline-title">B.Sc. (Hons) in Computer Science &amp; Engineering</div>
+        <div class="timeline-sub">Shanto-Mariam University of Creative Technology, Uttara, Dhaka</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-date">2021</div>
+        <div class="timeline-title">HSC — Higher Secondary Certificate</div>
+        <div class="timeline-sub">Sristy Central School &amp; College, Ashulia</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-date">2019</div>
+        <div class="timeline-title">SSC — Secondary School Certificate</div>
+        <div class="timeline-sub">Sristy Central School &amp; College, Ashulia</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section id="contact">
+    <div class="section-label">05 — Contact</div>
+    <h2 class="section-title reveal">Let's Connect</h2>
+    <div class="contact-wrapper">
+      <div class="contact-intro reveal">
+        <p>
+          I'm always open to new opportunities, collaborations, or just a good conversation about Flutter, mobile dev, or the best mountain trails in Bangladesh.
+        </p>
+        <p>Drop me a message — I'll get back to you.</p>
+        <a href="mailto:tamiim6050@gmail.com" class="contact-email">tamiim6050@gmail.com</a>
+      </div>
+      <div class="social-links reveal">
+        <a href="https://github.com/tamiie56" target="_blank" class="social-link">
+          <span class="social-icon">⌥</span>
+          GitHub
+          <span class="social-handle">@tamiie56</span>
+        </a>
+        <a href="https://www.linkedin.com/in/tamim-chad-likhon-206709389/" target="_blank" class="social-link">
+          <span class="social-icon">◈</span>
+          LinkedIn
+          <span class="social-handle">Tamim Chad Likhon</span>
+        </a>
+        <a href="https://youtube.com/@tamim4428" target="_blank" class="social-link">
+          <span class="social-icon">▶</span>
+          YouTube
+          <span class="social-handle">@tamim4428</span>
+        </a>
+        <a href="https://www.facebook.com/likhon.hassan.319/" target="_blank" class="social-link">
+          <span class="social-icon">◉</span>
+          Facebook
+          <span class="social-handle">likhon.hassan.319</span>
+        </a>
+        <a href="https://www.instagram.com/tamimkhan2455/" target="_blank" class="social-link">
+          <span class="social-icon">◎</span>
+          Instagram
+          <span class="social-handle">@tamimkhan2455</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div>© 2025 Tamim Chad Likhon</div>
+    <div>Built with HTML · CSS · JS</div>
+    <div>Dhaka, Bangladesh</div>
+  </footer>
+
+  <script>
+    // Custom cursor
+    const cursor = document.getElementById('cursor');
+    const ring = document.getElementById('cursorRing');
+    let mx = 0, my = 0, rx = 0, ry = 0;
+
+    document.addEventListener('mousemove', e => {
+      mx = e.clientX; my = e.clientY;
+      cursor.style.left = mx - 6 + 'px';
+      cursor.style.top = my - 6 + 'px';
+    });
+
+    function animateRing() {
+      rx += (mx - rx) * 0.12;
+      ry += (my - ry) * 0.12;
+      ring.style.left = rx - 18 + 'px';
+      ring.style.top = ry - 18 + 'px';
+      requestAnimationFrame(animateRing);
+    }
+    animateRing();
+
+    document.querySelectorAll('a, button').forEach(el => {
+      el.addEventListener('mouseenter', () => {
+        cursor.style.transform = 'scale(2)';
+        ring.style.transform = 'scale(1.5)';
+      });
+      el.addEventListener('mouseleave', () => {
+        cursor.style.transform = 'scale(1)';
+        ring.style.transform = 'scale(1)';
+      });
+    });
+
+    // Scroll reveal
+    const revealEls = document.querySelectorAll('.reveal, .timeline-item');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry, i) => {
+        if (entry.isIntersecting) {
+          setTimeout(() => entry.target.classList.add('visible'), i * 80);
+        }
+      });
+    }, { threshold: 0.1 });
+    revealEls.forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>
