@@ -33,6 +33,14 @@
       font-size: 0.85rem; transition: all 0.2s; flex-shrink: 0; margin-left: 0.4rem;
     }
     .theme-toggle:hover { color: var(--cyan); border-color: var(--cyan); }
+    .mobile-theme-toggle {
+      display: none;
+      width: 34px; height: 34px; border: 1px solid var(--border); border-radius: 50%;
+      align-items: center; justify-content: center;
+      color: var(--gray); background: transparent; cursor: pointer;
+      font-size: 0.85rem; transition: all 0.2s; flex-shrink: 0;
+    }
+    .mobile-theme-toggle:hover { color: var(--cyan); border-color: var(--cyan); }
 
     /* ── NAV ── */
     nav {
@@ -219,10 +227,11 @@
 
     /* ── MOBILE ── */
     @media (max-width: 768px) {
-      nav { padding: 1rem 4%; }
+      nav { padding: 1rem 4%; justify-content: space-between; }
       .nav-links { display: none; }
       .nav-right { display: none; }
       .hamburger { display: flex !important; }
+      .mobile-theme-toggle { display: flex !important; }
       section { padding: 4rem 4%; }
       .hero { padding: 100px 4% 60px; }
       .about-grid, .contact-grid { grid-template-columns: 1fr; gap: 2.5rem; }
@@ -344,6 +353,8 @@
       </div>
       <button class="theme-toggle" id="themeBtn" title="Toggle theme"><i class="fas fa-moon"></i></button>
     </div>
+    <!-- Mobile only toggle - far right -->
+    <button class="mobile-theme-toggle" id="mobilThemeBtn" title="Toggle theme"><i class="fas fa-moon"></i></button>
   </nav>
 
   <!-- Mobile Drawer -->
@@ -397,20 +408,6 @@
       </div>
     </div>
   </section>
-
-  <!-- BRAND BANNER -->
-  <div class="brand-banner">
-    <div class="brand-banner-inner">
-      <div class="brand-avatar">
-        <img src="profile.jpg" alt="Tamim"/>
-      </div>
-      <div class="brand-info">
-        <div class="brand-name">Tamim Chad Likhon</div>
-        <div class="brand-title">Flutter · Android · iOS Developer</div>
-      </div>
-      <div class="brand-badge">Open to Work</div>
-    </div>
-  </div>
 
   <!-- SKILLS -->
   <section id="skills">
@@ -653,14 +650,23 @@
 
     // Theme toggle
     const btn = document.getElementById('themeBtn');
+    const mBtn = document.getElementById('mobilThemeBtn');
     const icon = btn.querySelector('i');
+    const mIcon = mBtn.querySelector('i');
     const saved = localStorage.getItem('theme');
-    if (saved === 'light') { document.documentElement.classList.add('light'); icon.className = 'fas fa-sun'; }
-    btn.addEventListener('click', () => {
+    if (saved === 'light') {
+      document.documentElement.classList.add('light');
+      icon.className = 'fas fa-sun';
+      mIcon.className = 'fas fa-sun';
+    }
+    function toggleTheme() {
       const isLight = document.documentElement.classList.toggle('light');
       icon.className = isLight ? 'fas fa-sun' : 'fas fa-moon';
+      mIcon.className = isLight ? 'fas fa-sun' : 'fas fa-moon';
       localStorage.setItem('theme', isLight ? 'light' : 'dark');
-    });
+    }
+    btn.addEventListener('click', toggleTheme);
+    mBtn.addEventListener('click', toggleTheme);
 
     // Scroll reveal
     const els = document.querySelectorAll('.reveal, .tl-item');
