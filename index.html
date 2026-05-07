@@ -9,12 +9,26 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
-      --bg: #0a0a0a; --bg2: #111; --card: #161616; --card2: #1a1a1a;
-      --border: rgba(255,255,255,0.07); --cyan: #00d4ff;
-      --white: #fff; --gray: #888; --light: #ccc;
+      --bg: #080b0f; --bg2: #0d1117; --card: #131920; --card2: #1a2130;
+      --border: rgba(255,255,255,0.08); --cyan: #00c8f0; --cyan2: #0af;
+      --white: #f0f4f8; --gray: #7a8a99; --light: #b8c8d8;
+    }
+    html.light {
+      --bg: #f0f4f8; --bg2: #e2e8f0; --card: #ffffff; --card2: #f8fafc;
+      --border: rgba(0,0,0,0.09); --cyan: #0088aa; --cyan2: #006688;
+      --white: #0f172a; --gray: #64748b; --light: #334155;
     }
     html { scroll-behavior: smooth; }
-    body { background: var(--bg); color: var(--white); font-family: 'Poppins', sans-serif; overflow-x: hidden; }
+    body { background: var(--bg); color: var(--white); font-family: 'Poppins', sans-serif; overflow-x: hidden; transition: background 0.3s, color 0.3s; }
+
+    /* THEME TOGGLE */
+    .theme-toggle {
+      width: 34px; height: 34px; border: 1px solid var(--border); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--gray); background: transparent; cursor: pointer;
+      font-size: 0.85rem; transition: all 0.2s; flex-shrink: 0; margin-left: 0.4rem;
+    }
+    .theme-toggle:hover { color: var(--cyan); border-color: var(--cyan); }
 
     /* ── NAV ── */
     nav {
@@ -23,7 +37,9 @@
       padding: 1.1rem 6%;
       background: rgba(10,10,10,0.95); backdrop-filter: blur(10px);
       border-bottom: 1px solid var(--border);
+      transition: background 0.3s;
     }
+    html.light nav { background: rgba(245,247,250,0.95); }
     .nav-logo {
       font-family: 'Playfair Display', serif;
       font-size: 1.4rem; font-weight: 700;
@@ -228,6 +244,7 @@
       <a href="https://www.facebook.com/likhon.hassan.319/" target="_blank" title="Facebook"><i class="fab fa-facebook-f"></i></a>
       <a href="https://www.instagram.com/tamimkhan2455/" target="_blank" title="Instagram"><i class="fab fa-instagram"></i></a>
     </div>
+    <button class="theme-toggle" id="themeBtn" title="Toggle theme"><i class="fas fa-moon"></i></button>
   </nav>
 
   <!-- HERO -->
@@ -254,7 +271,7 @@
         <a href="#contact" class="btn btn-outline">Get in Touch</a>
       </div>
       <div class="hero-stats">
-        <div class="stat"><div class="stat-num">3+</div><div class="stat-label">Years Coding</div></div>
+        <div class="stat"><div class="stat-num">1+</div><div class="stat-label">Years Coding</div></div>
         <div class="stat"><div class="stat-num">1+</div><div class="stat-label">Projects Built</div></div>
         <div class="stat"><div class="stat-num">2026</div><div class="stat-label">Graduation</div></div>
       </div>
@@ -483,6 +500,18 @@
   </footer>
 
   <script>
+    // Theme toggle
+    const btn = document.getElementById('themeBtn');
+    const icon = btn.querySelector('i');
+    const saved = localStorage.getItem('theme');
+    if (saved === 'light') { document.documentElement.classList.add('light'); icon.className = 'fas fa-sun'; }
+    btn.addEventListener('click', () => {
+      const isLight = document.documentElement.classList.toggle('light');
+      icon.className = isLight ? 'fas fa-sun' : 'fas fa-moon';
+      localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    });
+
+    // Scroll reveal
     const els = document.querySelectorAll('.reveal, .tl-item');
     const obs = new IntersectionObserver((entries) => {
       entries.forEach((e, i) => {
