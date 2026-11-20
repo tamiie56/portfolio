@@ -1,0 +1,10 @@
+{
+  "name": "mr-cold-coffee",
+  "main": "index.js",
+  "compatibility_date": "2025-11-01",
+  "ai": { "binding": "AI" },
+  "ratelimits": [
+    { "name": "RL", "namespace_id": "1001", "simple": { "limit": 12, "period": 60 } }
+  ],
+  "observability": { "enabled": true }
+}
