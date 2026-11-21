@@ -846,6 +846,9 @@
     .am:hover .am-name, .am.hov .am-name { opacity: 1; }
     .am-bub { position: absolute; bottom: calc(100% + 10px); left: 50%; transform: translateX(-50%); min-width: max-content; max-width: 190px; font-family: var(--mono); font-size: .68rem; font-weight: 700; line-height: 1.3; text-align: center; color: #1b2233; background: #fff; border: 2px solid var(--c); border-radius: 14px; padding: .4rem .7rem; box-shadow: 0 6px 18px rgba(0,0,0,.28); pointer-events: none; white-space: nowrap; }
     .am-bub::after { content: ''; position: absolute; left: 50%; top: 100%; width: 9px; height: 9px; background: #fff; border-right: 2px solid var(--c); border-bottom: 2px solid var(--c); transform: translate(-50%, -5px) rotate(45deg); }
+    .am { z-index: 2; } .am.home { z-index: 1; } .am.home.talk, .am.hov { z-index: 4; }
+    .am.home .am-bub { opacity: 0; visibility: hidden; } .am.home.talk .am-bub { opacity: 1; visibility: visible; }
+    .am.home .am-art { filter: drop-shadow(0 6px 8px rgba(0,0,0,.3)); }
     .am-bub.pop { animation: amPop .4s cubic-bezier(.3,1.5,.5,1); }
     @keyframes amPop { from { opacity: 0; transform: translateX(-50%) scale(.6); } to { opacity: 1; transform: translateX(-50%) scale(1); } }
     .am.below .am-bub { bottom: auto; top: calc(100% + 14px); }
@@ -4007,75 +4010,118 @@
       return h + '</svg>';
     }
 
-    var layer = $('amLayer'), ms = [], mReduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches, mT = 0, mLast = 0, mRaf = 0, mVW = 0, mVH = 0, mS = 74, mTop = 84, mSp = 52;
-    function mBounds() { mVW = window.innerWidth; mVH = window.innerHeight; var m = mVW < 560; mS = m ? 54 : 74; mTop = m ? 64 : 84; mSp = m ? 34 : 52; }
-    function mPick(m) {
-      var tries = 0, x, y, M = 10;
-      do { x = rand(M, mVW - mS - M); y = rand(mTop, mVH - mS - M - 8); tries++; }
-      while (tries < 10 && (Math.hypot(x - m.x, y - m.y) < Math.min(mVW, mVH) * 0.26 || ms.some(function (o) { return o !== m && Math.hypot(x - o.tx, y - o.ty) < mS * 1.8; })));
-      m.tx = x; m.ty = y;
+    var layer = $('amLayer'), ms = [], mReduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches, mT = 0, mLast = 0, mRaf = 0, mVW = 0, mVH = 0, mS = 74, mTop = 84, mSp = 100;
+    var tour = { next: 0, rest: 3, homeSay: 2.2 };   /* only ONE mascot tours the screen at a time; the others wait at "home" */
+    function mBounds() { mVW = window.innerWidth; mVH = window.innerHeight; var m = mVW < 560; mS = m ? 54 : 74; mTop = m ? 64 : 84; mSp = m ? 66 : 100; }
+    function homePos(i) { var st = mS * 0.84, total = mS + 3 * st; return { x: mVW - 12 - total + i * st, y: mVH - mS - 16 }; }
+    function mWaypoints(m) {
+      var M = 10, zones = [], c, r, W2 = mVW - 2 * M, H2 = mVH - mTop - M;
+      for (c = 0; c < 3; c++) for (r = 0; r < 2; r++) zones.push([c, r]);
+      zones.sort(function () { return Math.random() - 0.5; });
+      var n = 4 + Math.floor(Math.random() * 3), pts = zones.slice(0, n).map(function (z) {
+        return { x: clamp(M + (z[0] + rand(0.15, 0.85)) * W2 / 3 - mS / 2, 6, mVW - mS - 6), y: clamp(mTop + (z[1] + rand(0.15, 0.85)) * H2 / 2 - mS / 2, mTop - 10, mVH - mS - 12) };
+      });
+      var out = [], cur = { x: m.x, y: m.y };
+      while (pts.length) { var bi = 0, bd = 1e9; pts.forEach(function (p, k) { var d = Math.hypot(p.x - cur.x, p.y - cur.y); if (d < bd) { bd = d; bi = k; } }); cur = pts.splice(bi, 1)[0]; out.push(cur); }
+      return out;
     }
     function mSay(m, t, hold) {
       m.bub.textContent = t; m.bub.classList.remove('pop'); void m.bub.offsetWidth; m.bub.classList.add('pop'); m.sayT = hold || rand(2.6, 3.6);
     }
-    function mLayoutStatic() { ms.forEach(function (m, i) { m.x = mVW - mS - 14; m.y = mTop + 20 + i * (mS + 46); place(m); }); }
     function place(m) {
-      var by = mReduce ? 0 : Math.sin(mT * 2 + m.ph) * 5;
+      var by = mReduce ? 0 : Math.sin(mT * 2 + m.ph) * (m.mode === 'home' ? 2.5 : 5);
       m.el.style.transform = 'translate3d(' + m.x.toFixed(1) + 'px,' + (m.y + by).toFixed(1) + 'px,0)';
       m.el.classList.toggle('below', m.y < 70);
       m.el.classList.toggle('el', m.x < 70); m.el.classList.toggle('er', m.x > mVW - mS - 70);
+    }
+    function mFace(m, f) { if (f !== m.face) { m.face = f; m.art.style.transform = 'scaleX(' + f + ')'; } }
+    function mStart(m) {                                  /* leave home and tour the screen */
+      m.mode = 'out'; m.el.classList.remove('home', 'talk'); m.wp = mWaypoints(m); m.wi = 0; m.tx = m.wp[0].x; m.ty = m.wp[0].y; m.wait = 0; m.li = 0;
+      mSay(m, 'Play me! 🎮'); tour.next = (m.slot + 1) % ms.length;
+    }
+    function mReturn(m) { m.mode = 'return'; var h = homePos(m.slot); m.tx = h.x; m.ty = h.y; m.wait = 0; mSay(m, 'Back to the gang! 👋', 5); }
+    function mDock(m) {
+      var h = homePos(m.slot); m.mode = 'home'; m.x = h.x; m.y = h.y; m.vx = m.vy = 0; m.el.classList.add('home'); m.el.classList.remove('talk'); mFace(m, -1); tour.rest = rand(2, 3);
+    }
+    function mSwap(X) {                                   /* a home mascot was clicked: it goes out, the current tourist comes back */
+      if (X.mode !== 'home') return;
+      ms.forEach(function (m) { if (m !== X && m.mode === 'out') mReturn(m); });
+      mStart(X);
+    }
+    function mStep(dt) {
+      mT += dt;
+      var busy = false;
+      ms.forEach(function (m) {
+        if (m.mode === 'home') {
+          var h = homePos(m.slot); m.x = h.x; m.y = h.y;
+          if (m.talkT > 0) { m.talkT -= dt; if (m.talkT <= 0 && !m.hover) m.el.classList.remove('talk'); }
+        } else {
+          busy = true;
+          m.sayT -= dt;
+          if (m.sayT <= 0 && !m.hover && m.mode === 'out') { m.li = (m.li + 1) % m.def.lines.length; mSay(m, m.def.lines[m.li]); }
+          if (m.hover) { m.vx *= 0.88; m.vy *= 0.88; }
+          else if (m.wait > 0) { m.wait -= dt; m.vx *= 0.95; m.vy *= 0.95; }
+          else {
+            var dx = m.tx - m.x, dy = m.ty - m.y, d = Math.hypot(dx, dy);
+            if (m.mode === 'return' && d < 10) { mDock(m); place(m); return; }
+            if (m.mode === 'out' && d < 22) {
+              if (m.wi < m.wp.length - 1) { m.wi++; m.wait = rand(0.7, 1.9); m.tx = m.wp[m.wi].x; m.ty = m.wp[m.wi].y; } else mReturn(m);
+            } else { var sp = mSp * m.def.speed * (m.mode === 'return' ? 1.15 : 1), k = Math.min(1, dt * 2.2); m.vx += (dx / (d || 1) * sp - m.vx) * k; m.vy += (dy / (d || 1) * sp - m.vy) * k; }
+          }
+          m.x = clamp(m.x + m.vx * dt, 6, mVW - mS - 6); m.y = clamp(m.y + m.vy * dt, mTop - 10, mVH - mS - 12);
+          if (Math.abs(m.vx) > 9) mFace(m, m.vx > 0 ? 1 : -1);
+        }
+        place(m);
+      });
+      /* the waiting mascots take turns to chatter, one bubble at a time */
+      tour.homeSay -= dt;
+      if (tour.homeSay <= 0) {
+        var hs = ms.filter(function (m) { return m.mode === 'home' && !m.hover; });
+        if (hs.length) { var q = hs[Math.floor(Math.random() * hs.length)]; q.el.classList.add('talk'); q.talkT = 2.6; mSay(q, Math.random() < 0.6 ? 'Play me! 🎮' : q.def.lines[1 + Math.floor(Math.random() * (q.def.lines.length - 1))], 2.6); }
+        tour.homeSay = rand(3, 4.4);
+      }
+      /* next mascot's turn once everyone is home again */
+      if (!busy && !mReduce) { tour.rest -= dt; if (tour.rest <= 0) mStart(ms[tour.next]); }
     }
     function mLoop(ts) {
       mRaf = requestAnimationFrame(mLoop);
       var dt = Math.min(0.05, (ts - mLast) / 1000 || 0); mLast = ts;
       if (isOpen) return;
-      mT += dt;
-      ms.forEach(function (m) {
-        m.sayT -= dt; if (m.sayT <= 0 && !m.hover) { if (m.again > 0) { m.again = 0; } m.li = (m.li + 1) % m.def.lines.length; mSay(m, m.def.lines[m.li]); }
-        if (m.again > 0) m.again -= dt;
-        if (!mReduce) {
-          if (m.hover) { m.vx *= 0.88; m.vy *= 0.88; }
-          else if (m.wait > 0) { m.wait -= dt; m.vx *= 0.96; m.vy *= 0.96; }
-          else {
-            var dx = m.tx - m.x, dy = m.ty - m.y, d = Math.hypot(dx, dy);
-            if (d < 22) { m.wait = rand(0.8, 2.4); mPick(m); }
-            else { var sp = mSp * m.def.speed, k = Math.min(1, dt * 1.7); m.vx += (dx / d * sp - m.vx) * k; m.vy += (dy / d * sp - m.vy) * k; }
-          }
-          ms.forEach(function (o) { if (o === m) return; var ox = m.x - o.x, oy = m.y - o.y, od = Math.hypot(ox, oy) || 1; if (od < mS * 1.5) { m.vx += ox / od * 60 * dt; m.vy += oy / od * 60 * dt; } });
-          m.x = clamp(m.x + m.vx * dt, 6, mVW - mS - 6); m.y = clamp(m.y + m.vy * dt, mTop - 10, mVH - mS - 12);
-          if (Math.abs(m.vx) > 9) { var f = m.vx > 0 ? 1 : -1; if (f !== m.face) { m.face = f; m.art.style.transform = 'scaleX(' + f + ')'; } }
-        }
-        place(m);
-      });
+      mStep(dt);
     }
     function mBuild() {
       if (!layer) return;
       mBounds();
       ['stack', 'bug', 'ghost', 'strike'].forEach(function (id, i) {
         var def = MDEF[id], el = document.createElement('div');
-        el.className = 'am am-' + id; el.style.setProperty('--c', def.color);
+        el.className = 'am am-' + id + ' home'; el.style.setProperty('--c', def.color);
         el.innerHTML = '<div class="am-bub"></div><button class="am-btn" type="button" aria-label="Play ' + def.name + '"><span class="am-art">' + msvg(id, 'm' + i) + '</span><span class="am-name">' + def.name + '</span></button>';
         layer.appendChild(el);
-        var m = { id: id, def: def, el: el, art: el.querySelector('.am-art'), bub: el.querySelector('.am-bub'), btn: el.querySelector('.am-btn'), x: mVW * (0.08 + i * 0.26), y: mVH * (0.28 + (i % 2) * 0.3), vx: 0, vy: 0, tx: 0, ty: 0, wait: rand(0, 1.2), ph: rand(0, 6), face: 1, li: i % def.lines.length, sayT: 0, hover: false, again: 0 };
-        ms.push(m); mPick(m);
-        mSay(m, m.def.lines[m.li], 1.2 + i * 0.9);
-        m.btn.addEventListener('pointerenter', function (e) { if (e.pointerType === 'mouse') { m.hover = true; el.classList.add('hov'); mSay(m, 'Click me! 🎮', 99); } });
-        m.btn.addEventListener('pointerleave', function () { if (m.hover) { m.hover = false; el.classList.remove('hov'); m.sayT = 0.4; } });
-        m.btn.addEventListener('click', function () { el.classList.remove('tap'); void el.offsetWidth; el.classList.add('tap'); open(id); });
+        var h = homePos(i), m = { id: id, slot: i, mode: 'home', def: def, el: el, art: el.querySelector('.am-art'), bub: el.querySelector('.am-bub'), btn: el.querySelector('.am-btn'), x: h.x, y: h.y, vx: 0, vy: 0, tx: 0, ty: 0, wp: [], wi: 0, wait: 0, ph: rand(0, 6), face: 1, li: 0, sayT: 0, talkT: 0, hover: false };
+        ms.push(m); mFace(m, -1); mSay(m, def.lines[0], 1); place(m);
+        m.btn.addEventListener('pointerenter', function (e) { if (e.pointerType === 'mouse') { m.hover = true; el.classList.add('hov'); if (m.mode === 'home') el.classList.add('talk'); mSay(m, 'Click me! 🎮', 99); } });
+        m.btn.addEventListener('pointerleave', function () { if (m.hover) { m.hover = false; el.classList.remove('hov'); if (m.mode === 'home') { m.talkT = 0.01; } m.sayT = 0.4; } });
+        m.btn.addEventListener('click', function () { el.classList.remove('tap'); void el.offsetWidth; el.classList.add('tap'); if (m.mode === 'home') mSwap(m); open(id); });
       });
-      if (mReduce) mLayoutStatic();
-      window.addEventListener('resize', function () { mBounds(); ms.forEach(function (m) { m.x = clamp(m.x, 6, mVW - mS - 6); m.y = clamp(m.y, mTop - 10, mVH - mS - 12); mPick(m); }); if (mReduce) mLayoutStatic(); });
+      window.addEventListener('resize', function () {
+        mBounds();
+        ms.forEach(function (m) {
+          if (m.mode === 'home') { var h = homePos(m.slot); m.x = h.x; m.y = h.y; }
+          else { m.x = clamp(m.x, 6, mVW - mS - 6); m.y = clamp(m.y, mTop - 10, mVH - mS - 12); if (m.mode === 'out') { m.wp = mWaypoints(m); m.wi = 0; m.tx = m.wp[0].x; m.ty = m.wp[0].y; } else { var h2 = homePos(m.slot); m.tx = h2.x; m.ty = h2.y; } }
+          place(m);
+        });
+      });
       document.addEventListener('visibilitychange', function () { mLast = performance.now(); });
       mLast = performance.now(); mRaf = requestAnimationFrame(mLoop);
     }
     function mascotsHide() { if (layer) layer.classList.add('off'); }
     function mascotsBack(id) {
       if (!layer) return; layer.classList.remove('off');
-      ms.forEach(function (m) { if (m.id === id) { m.again = 6; m.hover = false; m.el.classList.remove('hov'); mSay(m, 'Again? 😏', 6); } });
+      ms.forEach(function (m) { if (m.id === id) { m.hover = false; m.el.classList.remove('hov'); if (m.mode === 'home') { m.el.classList.add('talk'); m.talkT = 4; } mSay(m, 'Again? 😏', 5); } });
     }
     mBuild();
 
-    window.TD = window.TD || {}; window.TD.game = open; window.Arcade = { open: open, close: close, games: games, mascots: ms };
+    window.TD = window.TD || {}; window.TD.game = open; window.Arcade = { open: open, close: close, games: games, mascots: ms, mstep: mStep, tour: tour };
   })();
   </script>
 </body>
